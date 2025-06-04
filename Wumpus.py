@@ -32,6 +32,7 @@ font = pygame.font.SysFont(None, 24)
 # Environment setup
 world = [[{"pit": False, "wumpus": False, "gold": False} for _ in range(COLS)] for _ in range(ROWS)]
 agent_pos = [0, 0]
+agent_dir = "RIGHT"  # initial facing direction
 has_gold = False
 game_over = False
 arrow_used = False
@@ -155,11 +156,27 @@ while running:
                 }
                 if event.key in move_keys:
                     dx, dy = move_keys[event.key]
-                    nx, ny = agent_pos[0] + dx, agent_pos[1] + dy
-                    if 0 <= nx < ROWS and 0 <= ny < COLS:
-                        agent_pos = [nx, ny]
-                        steps += 1
-                        safe_tiles.add(tuple(agent_pos))
+
+            # Update direction based on movement
+                if (dx, dy) == (-1, 0):
+                    agent_dir = "UP"
+                    arrow_img = pygame.transform.rotate(images["arrow"], 180)
+                elif (dx, dy) == (1, 0):
+                    agent_dir = "DOWN"
+                    arrow_img = images["arrow"]  # No rotation needed
+                elif (dx, dy) == (0, -1):
+                    agent_dir = "LEFT"
+                    arrow_img = pygame.transform.rotate(images["arrow"], 90)
+                elif (dx, dy) == (0, 1):
+                    agent_dir = "RIGHT"
+                    arrow_img = pygame.transform.rotate(images["arrow"], -90)
+
+                nx, ny = agent_pos[0] + dx, agent_pos[1] + dy
+                if 0 <= nx < ROWS and 0 <= ny < COLS:
+                    agent_pos = [nx, ny]
+                    steps += 1
+                    safe_tiles.add(tuple(agent_pos))
+
                 elif event.key == pygame.K_a and not arrow_used:
                     arrow_used = True
                     arrow = "No"
