@@ -209,9 +209,10 @@ while running:
     for i in range(ROWS):
         for j in range(COLS):
             rect = pygame.Rect(j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-            pygame.draw.rect(screen, (255, 204, 224), rect, 1)
+            pygame.draw.rect(screen, (0, 18, 77), rect, 1)
             if (i, j) in safe_tiles:
-                pygame.draw.rect(screen, (144, 238, 144), rect)
+                pygame.draw.rect(screen, (230, 236, 255), rect)
+                pygame.draw.rect(screen, (0, 18, 77), rect, 1)
             cell = world[i][j]
             if cell["gold"]:
                 screen.blit(images["gold"], rect.topleft)
