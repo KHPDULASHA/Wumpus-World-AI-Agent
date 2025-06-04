@@ -362,11 +362,14 @@ while running:
             rect = pygame.Rect(j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE)
             pygame.draw.rect(screen, (0, 18, 77), rect, 1)
             if kb[i][j]["visited"]:
-                pygame.draw.rect(screen, (230, 236, 255), rect)
+                pygame.draw.rect(screen, (179, 179, 204), rect)
+                pygame.draw.rect(screen, (0, 18, 77), rect, 1)
             elif kb[i][j]["safe"] is True:
                 pygame.draw.rect(screen, (200, 255, 200), rect)
+                pygame.draw.rect(screen, (0, 18, 77), rect, 1)
             elif kb[i][j]["safe"] is False or kb[i][j]["pit?"] is True:
                 pygame.draw.rect(screen, (255, 200, 200), rect)
+                pygame.draw.rect(screen, (0, 18, 77), rect, 1)
             cell = world[i][j]
             if cell["gold"]:
                 screen.blit(images["gold"], rect.topleft)
@@ -374,8 +377,7 @@ while running:
                 screen.blit(images["pit"], rect.topleft)
             if cell["wumpus"] and wumpus_alive:
                 screen.blit(images["wumpus"], rect.topleft)
-            if kb[i][j]["visited"]:
-                pygame.draw.circle(screen, (0, 0, 0), rect.center, 5)
+            
 
     # Correct arrow rotation logic
     if agent_dir == "UP":
