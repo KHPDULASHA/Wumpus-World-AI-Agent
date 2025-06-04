@@ -40,7 +40,6 @@ arrow_used = False
 wumpus_alive = True
 
 # Knowledge base for agent
-# Each cell: {"safe": bool/None, "visited": bool, "pit?": bool/None, "wumpus?": bool/None}
 kb = [[{"safe": None, "visited": False, "pit?": None, "wumpus?": None} for _ in range(COLS)] for _ in range(ROWS)]
 
 def adjacent_tiles(x, y):
@@ -100,7 +99,6 @@ auto_step_delay = 10
 auto_step_counter = 0
 
 def infer_safe_and_danger(pos):
-    """Logical inference for pits and Wumpus, avoiding both."""
     x, y = pos
     percepts = get_percepts(pos)
     kb[x][y]["visited"] = True
@@ -115,7 +113,6 @@ def infer_safe_and_danger(pos):
             kb[i][j]["pit?"] = False
         if not stench and not breeze:
             kb[i][j]["safe"] = True
-    # If there is a breeze, and only one adjacent unknown, mark it as pit!
     if breeze:
         unknowns = [(i, j) for (i, j) in adjs
                     if kb[i][j]["safe"] is not True and not kb[i][j]["visited"] and kb[i][j]["pit?"] is not False]
@@ -123,7 +120,6 @@ def infer_safe_and_danger(pos):
             i, j = unknowns[0]
             kb[i][j]["pit?"] = True
             kb[i][j]["safe"] = False
-    # If there is a stench, and only one adjacent unknown, mark it as wumpus!
     if stench:
         unknowns = [(i, j) for (i, j) in adjs
                     if kb[i][j]["safe"] is not True and not kb[i][j]["visited"] and kb[i][j]["wumpus?"] is not False]
@@ -173,9 +169,8 @@ def pathfind(start, goal, allow_unknown=False):
     return []
 
 def agent_auto_move():
-    global agent_pos, has_gold, game_over, score, arrow_used, wumpus_alive, arrow
+    global agent_pos, has_gold, game_over, score, arrow_used, wumpus_alive, arrow, agent_dir
     infer_safe_and_danger(tuple(agent_pos))
-    # SHOOT WUMPUS IF CERTAIN AND IN ADJACENT TILE
     if not arrow_used and wumpus_alive:
         x, y = agent_pos
         percepts = get_percepts((x, y))
@@ -184,6 +179,15 @@ def agent_auto_move():
             wumpus_candidates = [(i, j) for (i, j) in adjs if kb[i][j]["wumpus?"] is True and not kb[i][j]["visited"]]
             if len(wumpus_candidates) == 1:
                 wx, wy = wumpus_candidates[0]
+                dx, dy = wx - x, wy - y
+                if dx == -1 and dy == 0:
+                    agent_dir = "UP"
+                elif dx == 1 and dy == 0:
+                    agent_dir = "DOWN"
+                elif dx == 0 and dy == -1:
+                    agent_dir = "LEFT"
+                elif dx == 0 and dy == 1:
+                    agent_dir = "RIGHT"
                 arrow_used = True
                 arrow = "No"
                 if world[wx][wy]["wumpus"]:
@@ -199,7 +203,16 @@ def agent_auto_move():
         if not path:
             path = pathfind(tuple(agent_pos), (0,0), allow_unknown=True)
         if path:
-            agent_pos[:] = path[0]
+            next_pos = path[0]
+            if next_pos[0] < agent_pos[0]:
+                agent_dir = "UP"
+            elif next_pos[0] > agent_pos[0]:
+                agent_dir = "DOWN"
+            elif next_pos[1] < agent_pos[1]:
+                agent_dir = "LEFT"
+            elif next_pos[1] > agent_pos[1]:
+                agent_dir = "RIGHT"
+            agent_pos[:] = next_pos
             kb[agent_pos[0]][agent_pos[1]]["visited"] = True
             return
         else:
@@ -216,7 +229,16 @@ def agent_auto_move():
         for target in safe_unvisited:
             path = pathfind(tuple(agent_pos), target)
             if path:
-                agent_pos[:] = path[0]
+                next_pos = path[0]
+                if next_pos[0] < agent_pos[0]:
+                    agent_dir = "UP"
+                elif next_pos[0] > agent_pos[0]:
+                    agent_dir = "DOWN"
+                elif next_pos[1] < agent_pos[1]:
+                    agent_dir = "LEFT"
+                elif next_pos[1] > agent_pos[1]:
+                    agent_dir = "RIGHT"
+                agent_pos[:] = next_pos
                 kb[agent_pos[0]][agent_pos[1]]["visited"] = True
                 return
     unknowns = unexplored_unknown_tiles()
@@ -225,7 +247,16 @@ def agent_auto_move():
         for target in unknowns:
             path = pathfind(tuple(agent_pos), target, allow_unknown=True)
             if path:
-                agent_pos[:] = path[0]
+                next_pos = path[0]
+                if next_pos[0] < agent_pos[0]:
+                    agent_dir = "UP"
+                elif next_pos[0] > agent_pos[0]:
+                    agent_dir = "DOWN"
+                elif next_pos[1] < agent_pos[1]:
+                    agent_dir = "LEFT"
+                elif next_pos[1] > agent_pos[1]:
+                    agent_dir = "RIGHT"
+                agent_pos[:] = next_pos
                 kb[agent_pos[0]][agent_pos[1]]["visited"] = True
                 return
     game_over = True
@@ -255,6 +286,7 @@ while running:
                         steps = 0
                         gold = 0
                         arrow = "Yes"
+                        agent_dir = "RIGHT"
                         game_over = False
                     elif label == "Auto":
                         auto_mode = not auto_mode
@@ -272,19 +304,14 @@ while running:
                     dx, dy = move_keys[event.key]
                     if (dx, dy) == (-1, 0):
                         agent_dir = "UP"
-                        arrow_img = pygame.transform.rotate(images["arrow"], 180)
                     elif (dx, dy) == (1, 0):
                         agent_dir = "DOWN"
-                        arrow_img = images["arrow"]
                     elif (dx, dy) == (0, -1):
                         agent_dir = "LEFT"
-                        arrow_img = pygame.transform.rotate(images["arrow"], 90)
                     elif (dx, dy) == (0, 1):
                         agent_dir = "RIGHT"
-                        arrow_img = pygame.transform.rotate(images["arrow"], -90)
                     nx, ny = agent_pos[0] + dx, agent_pos[1] + dy
                     if 0 <= nx < ROWS and 0 <= ny < COLS:
-                        # Avoid pits and Wumpus on manual move
                         if kb[nx][ny]["safe"] is not False and kb[nx][ny]["pit?"] is not True and kb[nx][ny]["wumpus?"] is not True:
                             agent_pos = [nx, ny]
                             kb[nx][ny]["visited"] = True
@@ -349,14 +376,28 @@ while running:
                 screen.blit(images["wumpus"], rect.topleft)
             if kb[i][j]["visited"]:
                 pygame.draw.circle(screen, (0, 0, 0), rect.center, 5)
+
+    # Correct arrow rotation logic
+    if agent_dir == "UP":
+        arrow_img = pygame.transform.rotate(images["arrow"], 90)
+    elif agent_dir == "RIGHT":
+        arrow_img = pygame.transform.rotate(images["arrow"], 0)
+    elif agent_dir == "DOWN":
+        arrow_img = pygame.transform.rotate(images["arrow"], -90)
+    elif agent_dir == "LEFT":
+        arrow_img = pygame.transform.rotate(images["arrow"], 180)
+    else:
+        arrow_img = images["arrow"]
+
     tile_x = agent_pos[1] * TILE_SIZE
     tile_y = agent_pos[0] * TILE_SIZE
     agent_img = images["agent"]
-    arrow_img = images["arrow"]
+
     agent_x = tile_x + (TILE_SIZE - agent_img.get_width()) // 2
     agent_y = tile_y + (TILE_SIZE - agent_img.get_height()) // 2 - 5
     arrow_x = tile_x + (TILE_SIZE - arrow_img.get_width()) // 2
     arrow_y = agent_y + agent_img.get_height() - 10
+
     screen.blit(agent_img, (agent_x, agent_y))
     screen.blit(arrow_img, (arrow_x, arrow_y))
     if game_over:
