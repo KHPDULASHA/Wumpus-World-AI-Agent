@@ -146,6 +146,7 @@ while running:
                         auto_mode = not auto_mode
                     elif label == "Sound":
                         sound_on = not sound_on
+
         elif event.type == pygame.KEYDOWN:
             if not game_over:
                 move_keys = {
@@ -154,40 +155,60 @@ while running:
                     pygame.K_LEFT: (0, -1),
                     pygame.K_RIGHT: (0, 1)
                 }
+
+                # --------- Movement Code ---------
                 if event.key in move_keys:
                     dx, dy = move_keys[event.key]
 
-            # Update direction based on movement
-                if (dx, dy) == (-1, 0):
-                    agent_dir = "UP"
-                    arrow_img = pygame.transform.rotate(images["arrow"], 180)
-                elif (dx, dy) == (1, 0):
-                    agent_dir = "DOWN"
-                    arrow_img = images["arrow"]  # No rotation needed
-                elif (dx, dy) == (0, -1):
-                    agent_dir = "LEFT"
-                    arrow_img = pygame.transform.rotate(images["arrow"], 90)
-                elif (dx, dy) == (0, 1):
-                    agent_dir = "RIGHT"
-                    arrow_img = pygame.transform.rotate(images["arrow"], -90)
+                    # Update direction based on movement key
+                    if (dx, dy) == (-1, 0):
+                        agent_dir = "UP"
+                        arrow_img = pygame.transform.rotate(images["arrow"], 180)
+                    elif (dx, dy) == (1, 0):
+                        agent_dir = "DOWN"
+                        arrow_img = images["arrow"]
+                    elif (dx, dy) == (0, -1):
+                        agent_dir = "LEFT"
+                        arrow_img = pygame.transform.rotate(images["arrow"], 90)
+                    elif (dx, dy) == (0, 1):
+                        agent_dir = "RIGHT"
+                        arrow_img = pygame.transform.rotate(images["arrow"], -90)
 
-                nx, ny = agent_pos[0] + dx, agent_pos[1] + dy
-                if 0 <= nx < ROWS and 0 <= ny < COLS:
-                    agent_pos = [nx, ny]
-                    steps += 1
-                    safe_tiles.add(tuple(agent_pos))
+                    # Move agent if within bounds
+                    nx, ny = agent_pos[0] + dx, agent_pos[1] + dy
+                    if 0 <= nx < ROWS and 0 <= ny < COLS:
+                        agent_pos = [nx, ny]
+                        steps += 1
+                        safe_tiles.add(tuple(agent_pos))
 
+                # --------- Shooting Code (Press 'A') ---------
                 elif event.key == pygame.K_a and not arrow_used:
                     arrow_used = True
                     arrow = "No"
-                    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                        tx, ty = agent_pos[0] + dx, agent_pos[1] + dy
+
+                    # Set direction to shoot based on agent_dir
+                    dx, dy = {
+                        "UP": (-1, 0),
+                        "DOWN": (1, 0),
+                        "LEFT": (0, -1),
+                        "RIGHT": (0, 1)
+                    }[agent_dir]
+
+                    # Shoot in that direction
+                    for step in range(1, ROWS):
+                        tx = agent_pos[0] + dx * step
+                        ty = agent_pos[1] + dy * step
+
                         if 0 <= tx < ROWS and 0 <= ty < COLS:
                             if world[tx][ty]["wumpus"]:
                                 world[tx][ty]["wumpus"] = False
                                 wumpus_alive = False
                                 score += 50
-                                break
+                                break  # arrow stops after killing wumpus
+                        else:
+                            break  # arrow goes out of bounds
+
+        
 
     if not game_over:
         x, y = agent_pos
