@@ -38,8 +38,7 @@ A graphical simulation of a Wumpus World environment and an intelligent agent th
     ## Installation & Running
   1. **Clone this repository:**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-   cd YOUR_REPO
+   git clone https://github.com/KHPDULASHA/https://github.com/KHPDULASHA/Wumpus-World-AI-Agent.git
    ```
 
 2. **Install dependencies:**
